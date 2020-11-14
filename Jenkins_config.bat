@@ -374,7 +374,6 @@ for %%s in (%suites%) do (
   ping 127.0.0.1 -n 11 >nul
 
   REM ============= List Process ================
-  REM tasklist /FI "USERNAME eq jenkins"
 
   @echo off
   squishrunner --port %port% --testsuite %%s %tags% %timeout% ^
