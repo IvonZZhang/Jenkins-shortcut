@@ -310,6 +310,8 @@ set suites=^
   %workspace%\uLogR\src\plugins\test_manager\tests\suite_BDD_TestManager
 :suitestobeselectedfrom
 
+echo off
+
 set suites=
 
 IF "%RUN_API%"=="true" set suites=%suites% ^
@@ -347,6 +349,7 @@ IF "%RUN_SETTINGSMANAGER%"=="true" set suites=%suites% ^
 IF "%RUN_TESTMANAGER%"=="true" set suites=%suites% ^
   %workspace%\uLogR\src\plugins\test_manager\tests\suite_BDD_TestManager
 
+echo on
 
 :: Skip scenarios tagged with @target and @T_ULOGR-1346
 :: Ref: https://wiki.u-blox.com/bin/view/Cellular/SquishGuiTester#List_of_TAG_39s_to_be_used_for_uLogR_test_scenarios
@@ -371,7 +374,7 @@ for %%s in (%suites%) do (
   ping 127.0.0.1 -n 11 >nul
 
   REM ============= List Process ================
-  ::tasklist /FI "USERNAME eq jenkins"
+  REM tasklist /FI "USERNAME eq jenkins"
 
   @echo off
   squishrunner --port %port% --testsuite %%s %tags% %timeout% ^
