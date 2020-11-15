@@ -194,6 +194,7 @@ REM ==============================================
 if exist %WORKSPACE%\squishrunner_report rmdir /s /q %WORKSPACE%\squishrunner_report
 mkdir %WORKSPACE%\squishrunner_report
 if exist %WORKSPACE%\squishrunner_report_xml rmdir /s /q %WORKSPACE%\squishrunner_report_xml
+if exist %WORKSPACE%\squishserver.out del %WORKSPACE%\squishserver.out
 
 
 :: Clean up old Squish crash dumps
