@@ -373,8 +373,6 @@ for %%s in (%suites%) do (
   echo REM Please wait ...
   ping 127.0.0.1 -n 11 >nul
 
-  REM ============= List Process ================
-
   @echo off
   squishrunner --port %port% --testsuite %%s %tags% %timeout% ^
         --reportgen html,%WORKSPACE%\squishrunner_report ^
@@ -384,12 +382,6 @@ for %%s in (%suites%) do (
         
   echo ------------------ FINISHED: Suite %%s --------------------------
   ping 127.0.0.1 -n 6 >nul
-
-  REM ============= Kill Process ================
-  taskkill /F /IM ulogr.exe /T 2>nul && echo Killed: ulogr.exe
-  taskkill /F /IM hh.exe /T 2>nul && echo Killed: hh.exe
-  taskkill /F /IM evi.exe /T 2>nul && echo Killed: evi.exe
-  taskkill /F /IM filezilla.exe /T 2>nul && echo Killed: filezilla.exe
 
   @echo on
 )
