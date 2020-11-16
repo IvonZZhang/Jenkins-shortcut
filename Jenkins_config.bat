@@ -253,9 +253,13 @@ echo JEE-2JHK2-2JU8A-2J2 > %WORKSPACE%\.squish-3-license
 set SQUISH_LICENSEKEY_DIR=%WORKSPACE%
 
 
+:: Make sure squishserver isn't accidentally running
+squishserver --stop --port %port%
+
+
 :: Start squishserver
 set port=4322
-start "" /B squishserver --port %port% --verbose  >squishserver.out 2>&1
+start /B squishserver --port %port% --verbose  >squishserver.out 2>&1
 
 
 :: Sleep for 5 seconds; give time for squishserver to start up:
