@@ -378,12 +378,12 @@ for %%s in (%suites%) do (
   echo REM Please wait ...
   ping 127.0.0.1 -n 11 >nul
 
-  @echo off
+  
   squishrunner --port %port% --testsuite %%s %tags% %timeout% ^
         --reportgen html,%WORKSPACE%\squishrunner_report ^
         --reportgen stdout ^
         >> %WORKSPACE%\squishrunner_report\squishrunner.out 2>&1
-  @echo off
+  
         
   echo ------------------ FINISHED: Suite %%s --------------------------
   ping 127.0.0.1 -n 6 >nul
