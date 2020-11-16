@@ -259,7 +259,7 @@ squishserver --stop --port %port%
 
 :: Start squishserver
 set port=4322
-start /B squishserver --port %port% --verbose  >squishserver.out 2>&1
+start /B squishserver --port %port% --verbose  &>squishserver.out
 
 
 :: Sleep for 5 seconds; give time for squishserver to start up:
