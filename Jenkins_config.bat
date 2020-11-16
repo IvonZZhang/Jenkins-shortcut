@@ -6,6 +6,21 @@
 :: --mode         <32bit|64bit>    Bitness of built uLogR and loaded squish
 :: --<testsuite>  <true|false>     Set to false to skip corresponding testsuite
 
+
+REM *********************************************
+REM ************   PART ZERO   ******************
+REM ************  CLEAN & ARGS  *****************
+REM *********************************************
+
+set JENKINS_BUILD_TYPE=
+set JENKINS_BUILD_MODE=
+set SKIP_CMAKE=
+set SKIP_BUILD=
+set SKIP_CMAKE_AND_BUILD=
+set RUN_API=
+
+
+
 :loop
 IF NOT "%1"=="" (
     IF "%1"=="--type" (
@@ -15,6 +30,15 @@ IF NOT "%1"=="" (
     IF "%1"=="--mode" (
         SET JENKINS_BUILD_MODE=%2
         SHIFT
+    )
+    IF "%1"=="--skip-cmake" (
+        SET SKIP_CMAKE=true
+    )
+    IF "%1"=="--skip-build" (
+        SET SKIP_BUILD=true
+    )
+    IF "%1"=="--skip-cmake-and-build" (
+        SET SKIP_CMAKE_AND_BUILD=true
     )
     if "%1"=="--Api" (
         set RUN_API=%2
@@ -160,6 +184,9 @@ REM ==============================================
 ECHO Current working directory is %CD%
 REM ==============================================
 
+IF "%SKIP_CMAKE_AND_BUILD%" == "true" goto buildend
+IF "%SKIP_CMAKE%" == "true" goto cmakeend
+
 REM ********************************
 REM *******     CMAKE     **********
 REM ********************************
@@ -167,6 +194,10 @@ REM ********************************
 :: Arguments checking has been handled in the beginning, so it can only be debug or release
 IF "%JENKINS_BUILD_TYPE%" == "debug" cmake-vcc -G Ninja %WORKSPACE%\uLogR\src
 IF "%JENKINS_BUILD_TYPE%" == "release" cmake-vcc -G Ninja %WORKSPACE%\uLogR\src -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+:cmakeend
+
+IF "%SKIP_BUILD%" == "true" goto buildend
 
 REM ********************************
 REM *******     NINJA     **********
@@ -179,6 +210,8 @@ REM *******     DEPLOY    **********
 REM ********************************
 
 ninja install
+
+:buildend
 
 REM *********************************************
 REM ************     PART FOUR     **************
@@ -259,7 +292,7 @@ squishserver --stop --port %port%
 
 :: Start squishserver
 set port=4322
-start /B squishserver --port %port% --verbose  &>squishserver.out
+start /B squishserver --port %port% --verbose  >squishserver.out 2>&1
 
 
 :: Sleep for 5 seconds; give time for squishserver to start up:
