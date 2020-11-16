@@ -372,7 +372,7 @@ call app list
 @echo on
 for %%s in (%suites%) do (
   set suite=%%s
-  set timeout=--timeout 6000
+  set timeout=--timeout 60
 
   echo ------------------ START: Suite %%s --------------------------
   echo REM Please wait ...
