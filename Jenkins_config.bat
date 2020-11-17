@@ -273,8 +273,9 @@ REM ==============================================
 echo Set up squish
 REM ==============================================
 :: Setup environment for squish
-IF "%JENKINS_BUILD_TYPE%" == "release" call app load squish/6.5.2_%JENKINS_BUILD_MODE%
-IF "%JENKINS_BUILD_TYPE%" == "debug" call app load squish/6.5.2_dbg_%JENKINS_BUILD_MODE%
+IF "%JENKINS_BUILD_TYPE%"=="release" IF "%JENKINS_BUILD_MODE%"=="32bit" call app load squish/6.5.2_32bit
+IF "%JENKINS_BUILD_TYPE%"=="release" IF "%JENKINS_BUILD_MODE%"=="64bit" call app load squish/6.5.2
+REM Debug versions will be loaded in setup_squish, so no need of manual loading.
 call app load "%JENKINS_BUILD_MODE%" %ULOGRROOT%\setup_squish
 @echo on
 
