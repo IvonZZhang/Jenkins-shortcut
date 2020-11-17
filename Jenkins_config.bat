@@ -273,6 +273,8 @@ REM ==============================================
 echo Set up squish
 REM ==============================================
 :: Setup environment for squish
+IF "%JENKINS_BUILD_TYPE%" == "release" call app load squish/6.5.2_%JENKINS_BUILD_MODE%
+IF "%JENKINS_BUILD_TYPE%" == "debug" call app load squish/6.5.2_dbg_%JENKINS_BUILD_MODE%
 call app load "%JENKINS_BUILD_MODE%" %ULOGRROOT%\setup_squish
 @echo on
 
@@ -423,8 +425,6 @@ for %%s in (%suites%) do (
   echo ------------------ START: Suite %%s --------------------------
   echo REM Please wait ...
   ping 127.0.0.1 -n 11 >nul
-
-  echo Wait end
   
   squishrunner --port %port% --testsuite %%s %tags% %timeout% ^
         --reportgen html,%WORKSPACE%\squishrunner_report ^
