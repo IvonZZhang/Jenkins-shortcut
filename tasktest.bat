@@ -2,7 +2,7 @@ set suite=abc ^
   def ^
   ghi ^
   jkl
-for %%s in ("%suite%") do (
+for %%s in (%suite%) do (
   echo %%s
   tasklist /FI "USERNAME eq jenkins" | sort
 )
