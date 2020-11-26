@@ -1,4 +1,4 @@
-suite=abc ^
+set suite=abc ^
   def ^
   ghi ^
   jkl
