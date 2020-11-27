@@ -5,13 +5,13 @@ UNIX_LINE_ENDING = b'\n'
 
 # relative or absolute file path, e.g.:
 file_path = r"/uLogR/src/tests/ref/decoder_test.ref"
-dir = os.path.dirname(__file__)
-filename = os.path.join(dir, file_path)
+dir = os.getcwd()
+filename = os.path.join(dir, 'uLogR', 'src', 'tests', 'ref', 'decoder_test.ref')
 
-with open(file_path, 'rb') as open_file:
+with open(filename, 'rb') as open_file:
     content = open_file.read()
 
 content = content.replace(WINDOWS_LINE_ENDING, UNIX_LINE_ENDING)
 
-with open(file_path, 'wb') as open_file:
+with open(filename, 'wb') as open_file:
     open_file.write(content)
