@@ -34,7 +34,7 @@ cmake -G Ninja \
    -DCBS_BUILD_WARNING_LEVEL=HIGH \
    "$ULOGRROOT/src"
    
-ninja
+ninja -j8
         
 ninja install
 
