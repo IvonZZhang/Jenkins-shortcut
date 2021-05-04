@@ -78,7 +78,7 @@ echo "Clean up old report, settings file, crash dumps, temporary files..."
 echo "=============================================="
 set -x
 # Clean up old report
-rm -rvf $WORKSPACE/squishrunner_report/
+rm -rvf $WORKSPACE/squishrunner_report_xml/
 rm -rvf $WORKSPACE/squishrunner_report_html/
 rm -rvf $WORKSPACE/squishrunner_stdout/
 mkdir $WORKSPACE/squishrunner_report
@@ -204,6 +204,9 @@ echo "SQUISH_USER_SETTINGS_DIR=$SQUISH_USER_SETTINGS_DIR"
 echo "=========================================="
 set -x
 
+echo "============== App List =================="
+app list
+
 cd $WORKSPACE
 
-squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squishrunner_report.xml --reportgen html,$WORKSPACE/squishrunner_report_html/ --reportgen stdout
+squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squishrunner_report_xml/squishrunner_report.xml --reportgen html,$WORKSPACE/squishrunner_report_html/ --reportgen stdout
