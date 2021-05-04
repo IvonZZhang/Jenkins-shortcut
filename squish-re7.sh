@@ -169,6 +169,7 @@ echo "Registering $autName to Squish..."
 # This adds this path to its settings file paths.ini
 export SQUISH_SCRIPT_DIR=$ULOGRROOT/src/tests/squish/common
 squishrunner --config setGlobalScriptDirs $SQUISH_SCRIPT_DIR
+app list
 # These add AUT configs to server.ini
 squishserver --config addAUT ulogr $ULOGRBUILD/delivery/bin
 squishserver --config addAUT ulogr.exe $ULOGRBUILD/delivery/lib64
