@@ -158,7 +158,7 @@ set -x
 mkdir -p $ULOGRBUILD/squish_temp
 export SQUISH_TEMP=$ULOGRBUILD/squish_temp
 
-# export SQUISH_LICENSEKEY_DIR=/var/lib/jenkins/etc # Don't store the license file in the SCM.
+export SQUISH_LICENSEKEY_DIR=/var/lib/jenkins/etc # Don't store the license file in the SCM.
 export SQUISH_USER_SETTINGS_DIR=$WORKSPACE/.squish
 export ULOGR_ARTIFICIAL_SRCREF_FILES=$ULOGRROOT/src/tests/srcref_files
 export EVITA_TARGET_PORT=8890
