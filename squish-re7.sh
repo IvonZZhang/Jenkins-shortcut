@@ -151,7 +151,7 @@ echo "Set up Squish"
 echo "=============================================="
 
 app load squish/6.5.2_qt512_dbg_64bit
-app load $ULOGRROOT/setup_squish
+app load 64bit $ULOGRROOT/setup_squish
 set -x
 
 # Where is this used?
@@ -164,7 +164,7 @@ export ULOGR_ARTIFICIAL_SRCREF_FILES=$ULOGRROOT/src/tests/srcref_files
 export EVITA_TARGET_PORT=8890
 
 # Register AUT to squishserver
-echo "Registering $autName to Squish..."
+echo "Registering ulogr to Squish..."
 # autAuthority=localhost:4324
 # This adds this path to its settings file paths.ini
 export SQUISH_SCRIPT_DIR=$ULOGRROOT/src/tests/squish/common
