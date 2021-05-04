@@ -81,7 +81,7 @@ set -x
 rm -rvf $WORKSPACE/squishrunner_report_xml/
 rm -rvf $WORKSPACE/squishrunner_report_html/
 rm -rvf $WORKSPACE/squishrunner_stdout/
-mkdir $WORKSPACE/squishrunner_report
+mkdir $WORKSPACE/squishrunner_report_xml
 mkdir $WORKSPACE/squishrunner_report_html
 mkdir $WORKSPACE/squishrunner_stdout
 rm -rvf $WORKSPACE/squishserver.out
