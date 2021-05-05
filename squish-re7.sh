@@ -98,8 +98,8 @@ rm -rvf $SQUISH_DUMP_FILE_PATH
 # uLogR settings directory should be empty to ensure tests run properly
 remove_ulogr_config() {
   (
-    cd $HOME/.ubx/ulogr
-    rm -vf *.json *.ini
+    rm -vf $HOME/.ubx/ulogr*.json 
+    rm -vf $HOME/.ubx/ulogr*.ini
   )
 }
 remove_ulogr_config
