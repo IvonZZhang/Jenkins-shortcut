@@ -222,7 +222,4 @@ echo "=============================================="
 echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
 
-echo -n "Shutting down vncserver..."
-kill $pid_vncserver
-
 
