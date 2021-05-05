@@ -78,12 +78,12 @@ echo "Clean up old report, settings file, crash dumps, temporary files..."
 echo "=============================================="
 set -x
 # Clean up old report
-rm -rvf $WORKSPACE/squishrunner_report_xml/
-rm -rvf $WORKSPACE/squishrunner_report_html/
-rm -rvf $WORKSPACE/squishrunner_stdout/
-mkdir $WORKSPACE/squishrunner_report_xml
-mkdir $WORKSPACE/squishrunner_report_html
-mkdir $WORKSPACE/squishrunner_stdout
+rm -rvf $WORKSPACE/squish_report_xml/
+rm -rvf $WORKSPACE/squish_report_html/
+rm -rvf $WORKSPACE/squish_stdout/
+mkdir $WORKSPACE/squish_report_xml
+mkdir $WORKSPACE/squish_report_html
+mkdir $WORKSPACE/squish_stdout
 rm -rvf $WORKSPACE/squishserver.out
 rm -rvf $WORKSPACE/build.status
 
@@ -142,7 +142,7 @@ then
     exit 1
 fi
 
-export DISPLAY="${disp}.0" # e.g. ":25.0"
+export DISPLAY="${disp}.0" # e.g. ":16.0"
 echo "DISPLAY=$DISPLAY"
 
 set +x
@@ -216,8 +216,42 @@ app list
 
 cd $WORKSPACE
 
-squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squishrunner_report_xml/squishrunner_report.xml --reportgen html,$WORKSPACE/squishrunner_report_html/ --reportgen stdout
+# squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squishrunner_report_xml/squishrunner_report.xml --reportgen html,$WORKSPACE/squishrunner_report_html/ --reportgen stdout
+for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
+do
+    # Deprecated test suites
+    if [[ $suite_dir == */suite_BDD_FlashFSViewer ]] || [[ $suite_dir == */suite_BDD_BandWidth ]] || [[ $suite_dir == */suite_BDD_MessageConsole ]]
+    then
+        continue
+    fi
+    if contains "$suite_dir" suite_BDD_Api
+    then
+        timeout="--timeout 3000"
+    else
+        timeout=""
+    fi   
 
+    set -x
+    remove_ulogr_config
+    
+    suite_name = echo $suite_dir | sed -E "s/^.*\/(\w+)/\1/"
+    set +x
+    echo
+    echo "------------------ START: $suite_name --------------------------
+    echo
+    set -x
+    squishrunner --testsuite $suite_dir --local $timeout \
+        $SQUISHRUNNER_TAGS \
+        --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report_${suite_name}.xml \
+        --reportgen html,$WORKSPACE/squish_report_html/ \
+        --reportgen stdout \
+        | tee $ULOGRBUILD/squish.out 2>&1
+    set +x
+    echo
+    echo "------------------ FINISHED: $suite_name --------------------------
+    echo
+    set -x
+done
 echo "=============================================="
 echo "Clean up Squish and VNC"
 echo "=============================================="
