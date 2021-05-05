@@ -173,21 +173,19 @@ echo "Registering ulogr to Squish..."
 # This adds this path to its settings file paths.ini
 export SQUISH_SCRIPT_DIR=$ULOGRROOT/src/tests/squish/common
 squishrunner --config setGlobalScriptDirs $SQUISH_SCRIPT_DIR
-app list
-cat $SQUISH_USER_SETTINGS_DIR/ver1/server.ini
+
 # These add AUT configs to server.ini
 squishserver --config addAUT ulogr $ULOGRBUILD/delivery/bin
 squishserver --config addAUT ulogr.exe $ULOGRBUILD/delivery/lib64
 squishserver --config addAttachableAUT ulogr localhost:9999
 # squishrunner --config addAttachableAUT ulogr localhost:9999
-echo "I'm before cat"
+
 set -x
 echo "==========================================="
 echo "Squish server settings:"
 cat $SQUISH_USER_SETTINGS_DIR/ver1/paths.ini
 cat $SQUISH_USER_SETTINGS_DIR/ver1/server.ini
 echo "==========================================="
-echo "I'm after cat"
 set +x
 
 export SQUISHRUNNER_TAGS="--tags ~@target --tags ~@T_ULOGR-1346 --tags ~@workinprogress --tags ~@replay --tags ~@deprecated"
