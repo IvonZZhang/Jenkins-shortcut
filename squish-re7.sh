@@ -154,6 +154,9 @@ app load squish/6.5.2_qt512_dbg_64bit
 app load 64bit $ULOGRROOT/setup_squish
 set -x
 
+# Prevent mainwindow from losing focus. Ref. https://kb.froglogic.com/squish/qt/howto/bringing-window-foreground/ and https://superuser.com/questions/143044/how-to-prevent-new-windows-from-stealing-focus-in-gnome
+gconftool-2 -s -t string /apps/metacity/general/focus_new_windows "None"
+
 # Where is this used?
 mkdir -p $ULOGRBUILD/squish_temp
 export SQUISH_TEMP=$ULOGRBUILD/squish_temp
