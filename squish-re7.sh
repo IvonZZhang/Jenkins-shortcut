@@ -214,3 +214,15 @@ app list
 cd $WORKSPACE
 
 squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squishrunner_report_xml/squishrunner_report.xml --reportgen html,$WORKSPACE/squishrunner_report_html/ --reportgen stdout
+
+echo "=============================================="
+echo "Clean up Squish and VNC"
+echo "=============================================="
+
+echo -n "Shutting down Xvnc at $disp..."
+vncserver -kill $disp
+
+echo -n "Shutting down vncserver..."
+kill $pid_vncserver
+
+
