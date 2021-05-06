@@ -223,28 +223,28 @@ do
     then
         continue
     fi
-    if [[ $suite_dir == */suite_BDD_Api ]]
-    then
-        timeout="--timeout 3000"
-    else
-        timeout=""
-    fi   
+#     if [[ $suite_dir == */suite_BDD_Api ]]
+#     then
+#         timeout="--timeout 3000"
+#     else
+#         timeout=""
+#     fi   
 
-    set -x
-    remove_ulogr_config
+#     set -x
+#     remove_ulogr_config
     
-    suite_name=$(echo $suite_dir | sed -E "s/^.*\/(\w+)/\1/")
-    set +x
-    echo
-    echo "------------------ START: $suite_name --------------------------
-    echo
-    set -x
-    squishrunner --testsuite $suite_dir --local $timeout $SQUISHRUNNER_TAGS --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report_${suite_name}.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout
-    set +x
-    echo
-    echo "------------------ FINISHED: $suite_name --------------------------
-    echo
-    set -x
+#     suite_name=$(echo $suite_dir | sed -E "s/^.*\/(\w+)/\1/")
+#     set +x
+#     echo
+#     echo "------------------ START: $suite_name --------------------------
+#     echo
+#     set -x
+    squishrunner --testsuite $suite_dir --local $SQUISHRUNNER_TAGS --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report_${suite_name}.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout
+#     set +x
+#     echo
+#     echo "------------------ FINISHED: $suite_name --------------------------
+#     echo
+#     set -x
 done
 
 echo "=============================================="
