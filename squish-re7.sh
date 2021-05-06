@@ -133,10 +133,10 @@ echo "VNC Server configuration done. Launching vncserver..."
    vncserver -name jenkins_1 -xstartup $SQUISH_FOR_JENKINS/squish-xstartup -geometry 1280x800
    #echo "New 'jenkins_1' desktop is be-lvn-pm-000.cog.cognovo.com:99"  # Simulation
    #sleep 999 # Simulation
-) > vncserver.out 2>&1 &
+) > $WORKSPACE/vncserver.out 2>&1 &
 pid_vncserver=$!
 sleep 8 # VNC server usually takes 4 seconds. Double it for safety.
-disp=$(awk 'BEGIN { FS="[ :]" } /^New/ { printf(":%s\n", $6) }' vncserver.out)
+disp=$(awk 'BEGIN { FS="[ :]" } /^New/ { printf(":%s\n", $6) }' $WORKSPACE/vncserver.out)
 echo "Using X display: $disp"
 if [ "$disp" == "" ]
 then
