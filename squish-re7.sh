@@ -239,7 +239,7 @@ do
     echo "------------------ START: $suite_name --------------------------
     echo
     set -x
-    squishrunner --testsuite $suite_dir --local $timeout $SQUISHRUNNER_TAGS --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report_${suite_name}.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout | tee -a $ULOGRBUILD/squish.out 2>&1
+    squishrunner --testsuite $suite_dir --local $timeout $SQUISHRUNNER_TAGS --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report_${suite_name}.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout > >(tee -a $ULOGRBUILD/squish.out) 2> >(tee -a $ULOGRBUILD/squish.out >&2)
     set +x
     echo
     echo "------------------ FINISHED: $suite_name --------------------------
