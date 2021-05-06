@@ -223,7 +223,7 @@ do
     then
         continue
     fi
-    if contains "$suite_dir" suite_BDD_Api
+    if [[ $suite_dir == */suite_BDD_Api ]]
     then
         timeout="--timeout 3000"
     else
