@@ -122,17 +122,10 @@ export SQUISH_FOR_JENKINS=$WORKSPACE/uLogR/src/tests/squish/jenkins
 cp -v $SQUISH_FOR_JENKINS/.vnc/passwd $HOME/.vnc/passwd # Password: jenkins
 chmod go-r $HOME/.vnc/passwd # Own passwd file must be private.
 
-# VNC configuration
-cat > $HOME/.vnc/config <<EOF
-geometry=1400x1050
-EOF
-
-echo "VNC Server configuration done. Launching vncserver..."
+echo "Launching VNC Server..."
 
 (
-   vncserver -name jenkins_1 -xstartup $SQUISH_FOR_JENKINS/squish-xstartup -geometry 1280x800
-   #echo "New 'jenkins_1' desktop is be-lvn-pm-000.cog.cognovo.com:99"  # Simulation
-   #sleep 999 # Simulation
+   vncserver -name jenkins_1 -xstartup $SQUISH_FOR_JENKINS/squish-xstartup -geometry 1400x1050
 ) > $WORKSPACE/vncserver.out 2>&1 &
 pid_vncserver=$!
 sleep 8 # VNC server usually takes 4 seconds. Double it for safety.
