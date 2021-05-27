@@ -44,7 +44,7 @@ echo "********************************"
 echo "*******     CMAKE     **********"
 echo "********************************"
 
-cmake -G Ninja \
+cmake-gcc -G Ninja \
    -DCMAKE_BUILD_TYPE=Debug \
    -DCTEST_GENERATE_XUNIT_FILES=ON \
    -DCBS_BUILD_WARNING_LEVEL=LOW \
