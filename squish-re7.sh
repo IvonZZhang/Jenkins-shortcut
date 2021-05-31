@@ -211,6 +211,10 @@ cd $WORKSPACE
 # squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout | tee -a $ULOGRBUILD/squish.out 2>&1
 for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
 do
+    if [[ $suite_dir == */suite_BDD_Core ]]
+    then
+        continue
+    fi
     # Deprecated test suites
     if [[ $suite_dir == */suite_BDD_FlashFSViewer ]] || [[ $suite_dir == */suite_BDD_BandWidth ]] || [[ $suite_dir == */suite_BDD_MessageConsole ]]
     then
