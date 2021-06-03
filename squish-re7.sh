@@ -1,10 +1,13 @@
 #! /bin/sh
 # ulimit -f 10000000 # 10 GB
 set +o posix
+
+set +x
 echo "*********************************************"
 echo "************   PART ONE    ******************"
 echo "************  ENVIRONMENT  ******************"
 echo "*********************************************"
+set -x
 
 ${MODULE_INIT_CMD}
 ## Start with a clean environment
@@ -26,10 +29,12 @@ mkdir -p $BUILD
 
 printenv  > envVars.prop
 
+set +x
 echo "*********************************************"
 echo "***********    PART TWO    ******************"
 echo "*********** BUILD & DEPLOY ******************"
 echo "*********************************************"
+set -x
 
 echo Skipping removal of BUILDS, only remove tests.
 [ -e $BUILD/Testing ] && rm -rf $BUILD/Testing || echo "No $BUILD/Testing directory to delete."
@@ -37,6 +42,8 @@ echo Skipping removal of BUILDS, only remove tests.
 ## [ -e $BUILD ] && rm -rf $BUILD || echo "No $BUILD directory to delete."
 
 cd "$BUILD"
+
+set +x
 echo "=============================================="
 echo "Current working directory is $PWD"
 echo "=============================================="
@@ -44,6 +51,7 @@ echo "=============================================="
 echo "********************************"
 echo "*******     CMAKE     **********"
 echo "********************************"
+set -x
 
 cmake-gcc -G Ninja \
    -DCMAKE_BUILD_TYPE=Debug \
@@ -51,9 +59,11 @@ cmake-gcc -G Ninja \
    -DCBS_BUILD_WARNING_LEVEL=LOW \
    "$ULOGRROOT/src"
 
+set +x
 echo "********************************"
 echo "*******     NINJA     **********"
 echo "********************************"
+set -x
 
 ninja
 
@@ -61,6 +71,7 @@ set +x
 echo "********************************"
 echo "*******     DEPLOY    **********"
 echo "********************************"
+set -x
 
 ninja install
 
