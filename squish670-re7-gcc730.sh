@@ -212,8 +212,6 @@ echo "SQUISH_USER_SETTINGS_DIR=$SQUISH_USER_SETTINGS_DIR"
 echo "=========================================="
 set -x
 
-squishrunner > $WORKSPACE/squish_version.txt # To know the version of squish used
-
 echo "============== App List =================="
 app list
 
