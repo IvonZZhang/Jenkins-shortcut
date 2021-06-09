@@ -62,7 +62,7 @@ echo "*******     NINJA     **********"
 echo "********************************"
 set -x
 
-ninja
+ninja -j8
 
 set +x
 echo "********************************"
@@ -211,6 +211,8 @@ echo "ULOGR_ARTIFICIAL_SRCREF_FILES=$ULOGR_ARTIFICIAL_SRCREF_FILES"
 echo "SQUISH_USER_SETTINGS_DIR=$SQUISH_USER_SETTINGS_DIR"
 echo "=========================================="
 set -x
+
+squishrunner > %WORKSPACE%/squish_version.txt # To know the version of squish used
 
 echo "============== App List =================="
 app list
