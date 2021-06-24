@@ -209,13 +209,15 @@ echo "Clean up old report, settings file, crash dumps, temporary files..."
 echo "=============================================="
 set -x
 # Clean up old report
-rm -rvf $WORKSPACE/squish_report_xml/
-rm -rvf $WORKSPACE/squish_report_html/
-rm -rvf $WORKSPACE/squish_stdout/
-mkdir $WORKSPACE/squish_report_xml
-mkdir $WORKSPACE/squish_report_html
-mkdir $WORKSPACE/squish_stdout
-rm -rvf $WORKSPACE/squishserver.out
+SQUISH_REPORT_DIR=$WORKSPACE/Report_Squish
+if [ ! -d "${SQUISH_REPORT_DIR}" ]; then
+    echo ">>> Creating Squish report directory"
+    mkdir -p $SQUISH_REPORT_DIR
+else
+    echo ">>> Removing any previous Squish reports from ${SQUISH_REPORT_DIR}"
+    rm -rf ${SQUISH_REPORT_DIR}/*
+fi
+
 rm -rvf $WORKSPACE/build.status
 
 # To store SquishDumps in workspace instead of a user's space
@@ -278,7 +280,8 @@ app load squish/6.7.0_qt512_64bit
 app load 64bit $ULOGRROOT/setup_squish
 set -x
 
-# Prevent mainwindow from losing focus. Ref. https://kb.froglogic.com/squish/qt/howto/bringing-window-foreground/ and https://superuser.com/questions/143044/how-to-prevent-new-windows-from-stealing-focus-in-gnome
+# Prevent mainwindow from losing focus.
+# Ref. https://kb.froglogic.com/squish/qt/howto/bringing-window-foreground/ and https://superuser.com/questions/143044/how-to-prevent-new-windows-from-stealing-focus-in-gnome
 gconftool-2 -s -t string /apps/metacity/general/focus_new_windows "None"
 
 # Where is this used?
@@ -317,7 +320,6 @@ set -x
 
 # evaluate_squish_report_py=$WORKSPACE/uLogR/src/tests/squish/scripts/evaluate_squish_report.py
 
-
 set +x
 echo "=========================================="
 echo "Some crucial environment variables:"
@@ -333,12 +335,25 @@ echo "SQUISH_USER_SETTINGS_DIR=$SQUISH_USER_SETTINGS_DIR"
 echo "=========================================="
 set -x
 
+
+set +x
+echo "********************************"
+echo "***** PREPARE FOR COVERAGE *****"
+echo "********************************"
+set -x
+app load gcovr
+app load lcov
+lcov --zerocounters --directory  $ULOGRBUILD
+
 echo "============== App List =================="
 app list
 
 cd $WORKSPACE
 
-# squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout | tee -a $ULOGRBUILD/squish.out 2>&1
+# squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local \
+#--tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' \
+#--reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report.xml --reportgen html,$WORKSPACE/squish_report_html/ \
+#--reportgen stdout | tee -a $ULOGRBUILD/squish.out 2>&1
 for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
 do
     set -x
@@ -355,7 +370,10 @@ do
     echo "------------------ START: $suite_name --------------------------"
     echo
     set -x
-    squishrunner --testsuite $suite_dir --local --retry 2 $timeout $SQUISHRUNNER_TAGS --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report_${suite_name}.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout > >(tee -a $ULOGRBUILD/squish.out) 2> >(tee -a $ULOGRBUILD/squish.out >&2)
+    squishrunner --testsuite $suite_dir --local --retry 2 $timeout $SQUISHRUNNER_TAGS \
+                 --reportgen xml2.2,$SQUISH_REPORT_DIR/squish_report_xml/squish_report_${suite_name}.xml \
+                 --reportgen html,$SQUISH_REPORT_DIR/squish_report_html/ \
+                 --reportgen stdout > >(tee -a $SQUISH_REPORT_DIR/squish.out) 2> >(tee -a $SQUISH_REPORT_DIR/squish.out >&2)
     set +x
     echo
     echo "------------------ FINISHED: $suite_name ------------------------"
@@ -377,6 +395,40 @@ echo "************     COVERAGE      **************"
 echo "*********************************************"
 set -x
 
-app load gcovr
-app load lcov
+COVERAGE_REPORT_DIR=$WORKSPACE/Report_Coverage
+if [ ! -d "$COVERAGE_REPORT_DIR" ]; then
+    echo ">>> Creating coverage report directory"
+    install -d -o jenkins -g jenkins -m 0755 "${COVERAGE_REPORT_DIR}"
+else
+    echo ">>> Removing any previous lcov reports from ${COVERAGE_REPORT_DIR}"
+    rm -rf ${COVERAGE_REPORT_DIR}/*
+fi
+
+# The data is now in $ULOGRBUILD as it would be after a normal build/test run
+# Extracting the data for the cobertura publisher
+gcovr $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
+
+# Use lcov to extract the coverage data to html data
+LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
+echo ">>> Creating lcov archive directory"
+install -d -o jenkins -g jenkins -m 0755 "${LCOV_ARCHIVE}"
+
+# Possibly the info file can also be filtered to avoid unwanted directories/libraries to be counted
+lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
+
+# Filter out the stuff we don't want
+# Important: Don't use '/u-blox/*' as a removal pattern, because it could remove entries that are in 
+# the Jenkins workspace on some build nodes (e.g. '/u-blox/work/jenkins000/...').
+lcov --remove ${LCOV_ARCHIVE}/lcov.info '/u-blox/gallery/*' -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info '*pools.cpp'        -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info '*rapidjson*'       -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "BUILDS*"           -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "datamodel/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*"  -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "evita/*"  -o ${LCOV_ARCHIVE}/lcov.info
+#lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
+
+# Generate the html files from the info
+genhtml ${LCOV_ARCHIVE}/lcov.info --prefix ${WORKSPACE} --ignore-errors source -o ${LCOV_ARCHIVE}/html
 
