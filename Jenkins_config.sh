@@ -52,6 +52,7 @@ set -x
 
 cmake-gcc -G Ninja \
    -DCMAKE_BUILD_TYPE=Debug \
+   -DCBS_BUILD_OPTIONS_COVERAGE=ON \
    -DCTEST_GENERATE_XUNIT_FILES=ON \
    -DCBS_BUILD_WARNING_LEVEL=LOW \
    "$ULOGRROOT/src"
@@ -62,7 +63,7 @@ echo "*******     NINJA     **********"
 echo "********************************"
 set -x
 
-ninja -j8
+ninja -j6
 
 set +x
 echo "********************************"
