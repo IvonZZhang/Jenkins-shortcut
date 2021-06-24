@@ -226,12 +226,6 @@ do
     then
         continue
     fi
-    if [[ $suite_dir == */suite_BDD_Api ]]
-    then
-        timeout="--timeout 3000"
-    else
-        timeout=""
-    fi   
 
     set -x
     remove_ulogr_config
