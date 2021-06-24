@@ -4,6 +4,117 @@ set +o posix
 
 set +x
 echo "*********************************************"
+echo "************   PART ZERO   ******************"
+echo "************  ARG PARSING  ******************"
+echo "*********************************************"
+
+JENKINS_BUILD_TYPE=
+NKNOWN_OPTIONS=()
+SUITES_TO_RUN=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -t|--build-type)
+      JENKINS_BUILD_TYPE="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --api)
+      SUITES_TO_RUN+=("suite_BDD_Api")
+      shift # past argument
+      ;;
+    --atconsole)
+      SUITES_TO_RUN+=("suite_BDD_ATConsole")
+      shift # past argument
+      ;;
+    --bandwidth)
+      # SUITES_TO_RUN+=("suite_BDD_Bandwidth")
+      echo "Suite_BDD_Bandwidth has deprecated and is ignored."
+      shift # past argument
+      ;;
+    --core)
+      SUITES_TO_RUN+=("suite_BDD_Core")
+      shift # past argument
+      ;;
+    --dashboard)
+      SUITES_TO_RUN+=("suite_BDD_Dashboard")
+      shift # past argument
+      ;;
+    --evi)
+      SUITES_TO_RUN+=("suite_BDD_Evi")
+      shift # past argument
+      ;;
+    --flashfilesystemviewer)
+      SUITES_TO_RUN+=("suite_BDD_FlashFileSystemViewer")
+      shift # past argument
+      ;;
+    --genericmessageview)
+      SUITES_TO_RUN+=("suite_BDD_GenericMessageView")
+      shift # past argument
+      ;;
+    --graphviewer)
+      SUITES_TO_RUN+=("suite_BDD_GraphViewer")
+      shift # past argument
+      ;;
+    --listview)
+      SUITES_TO_RUN+=("suite_BDD_ListView")
+      shift # past argument
+      ;;
+    --memoryviewer)
+      SUITES_TO_RUN+=("suite_BDD_MemoryViewer")
+      shift # past argument
+      ;;
+    --messageconsole)
+      # SUITES_TO_RUN+=("suite_BDD_MessageConsole")
+      echo "Suite_BDD_MessageConsole has deprecated and is ignored."
+      shift # past argument
+      ;;
+    --objectviewer)
+      SUITES_TO_RUN+=("suite_BDD_ObjectViewer")
+      shift # past argument
+      ;;
+    --psmessageviewer)
+      SUITES_TO_RUN+=("suite_BDD_PSMessageViewer")
+      shift # past argument
+      ;;
+    --runtimefilter)
+      SUITES_TO_RUN+=("suite_BDD_RuntimeFilter")
+      shift # past argument
+      ;;
+    --settingsmanager)
+      SUITES_TO_RUN+=("suite_BDD_SettingsManager")
+      shift # past argument
+      ;;
+    --testmanager)
+      SUITES_TO_RUN+=("suite_BDD_TestManager")
+      shift # past argument
+      ;;
+    --default)
+      DEFAULT=YES
+      shift # past argument
+      ;;
+    *)    # unknown option
+      UNKNOWN_OPTIONS+=("$1") # save it in an array for later
+      shift # past argument
+      ;;
+  esac
+done
+
+set -- "${UNKNOWN_OPTIONS[@]}" # restore unknown options
+echo "Unknown options: ${UNKNOWN_OPTIONS[*]}"
+
+if [[ ! $JENKINS_BUILD_TYPE == "release" ]] && [[ ! $JENKINS_BUILD_TYPE == "debug" ]]; then
+    echo "Please specify build type using '-t or --build-type <release|debug>'"
+    exit 1
+fi
+
+echo "================================================================================================="
+echo "Running configurations for Squish test for uLogR 64bit $JENKINS_BUILD_TYPE build."
+echo "Suites to run: ${SUITES_TO_RUN[*]}"
+echo "================================================================================================"
+
+echo "*********************************************"
 echo "************   PART ONE    ******************"
 echo "************  ENVIRONMENT  ******************"
 echo "*********************************************"
@@ -50,12 +161,21 @@ echo "*******     CMAKE     **********"
 echo "********************************"
 set -x
 
-cmake-gcc -G Ninja \
-   -DCMAKE_BUILD_TYPE=Debug \
-   -DCBS_BUILD_OPTIONS_COVERAGE=ON \
-   -DCTEST_GENERATE_XUNIT_FILES=ON \
-   -DCBS_BUILD_WARNING_LEVEL=LOW \
-   "$ULOGRROOT/src"
+if [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
+    cmake-gcc -G Ninja \
+       -DCMAKE_BUILD_TYPE=Debug \
+       -DCBS_BUILD_OPTIONS_COVERAGE=ON \
+       -DCTEST_GENERATE_XUNIT_FILES=ON \
+       -DCBS_BUILD_WARNING_LEVEL=LOW \
+       "$ULOGRROOT/src"
+else
+    cmake-gcc -G Ninja \
+       -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+       -DCBS_BUILD_OPTIONS_COVERAGE=ON \
+       -DCTEST_GENERATE_XUNIT_FILES=ON \
+       -DCBS_BUILD_WARNING_LEVEL=LOW \
+       "$ULOGRROOT/src"
+fi
 
 set +x
 echo "********************************"
@@ -221,16 +341,15 @@ cd $WORKSPACE
 # squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local --tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' --reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report.xml --reportgen html,$WORKSPACE/squish_report_html/ --reportgen stdout | tee -a $ULOGRBUILD/squish.out 2>&1
 for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
 do
-    # Deprecated test suites
-    if [[ $suite_dir == */suite_BDD_FlashFSViewer ]] || [[ $suite_dir == */suite_BDD_BandWidth ]] || [[ $suite_dir == */suite_BDD_MessageConsole ]]
-    then
-        continue
-    fi
-
     set -x
     remove_ulogr_config
     
     suite_name=$(echo $suite_dir | sed -E "s/^.*\/(\w+)/\1/")
+    if [[ ! " ${SUITES_TO_RUN[@]} " =~ " ${suite_name} " ]]; then
+        # Not asked to run this suite, skip
+        continue
+    fi
+    
     set +x
     echo
     echo "------------------ START: $suite_name --------------------------"
