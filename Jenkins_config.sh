@@ -406,7 +406,7 @@ fi
 
 # The data is now in $ULOGRBUILD as it would be after a normal build/test run
 # Extracting the data for the cobertura publisher
-gcovr $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
+gcovr -r $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
 
 # Use lcov to extract the coverage data to html data
 LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
