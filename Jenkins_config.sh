@@ -196,8 +196,11 @@ ninja install
 # $BUILD/delivery/bin/ulogr2text --help > ulogr2text_out.txt 2>&1
 
 # export  QT_QPA_PLATFORM=minimal
-# ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1
-
+app load gcovr
+app load lcov
+lcov --zerocounters --directory  $ULOGRBUILD
+ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1
+: <<'END'
 set +x
 echo "*********************************************"
 echo "************     PART FOUR     **************"
@@ -387,7 +390,7 @@ echo "=============================================="
 
 echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
-
+END
 set +x
 echo "*********************************************"
 echo "************     PART FIVE     **************"
