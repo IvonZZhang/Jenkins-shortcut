@@ -435,6 +435,7 @@ lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/tests/*" -o ${LCOV_ARCHIVE}/l
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "datamodel/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*"  -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "evita/*"  -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ./lcov-archive/lcov.info '*/moc_*.cpp' -o ./lcov-archive/lcov.info
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
 
 # Generate the html files from the info
