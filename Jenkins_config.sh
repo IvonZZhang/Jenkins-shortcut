@@ -1,6 +1,9 @@
 #! /bin/sh
 # ulimit -f 10000000 # 10 GB
 set +o posix
+# Jenkins execute shell scripts with `/bin/sh -xe`, which means it exits immediately after a failure
+# We want it to execute anyway, even if e.g. some ctests fails. So disable option -e manually
+set +e
 
 set +x
 echo "*********************************************"
