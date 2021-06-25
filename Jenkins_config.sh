@@ -199,8 +199,8 @@ ninja install
 app load gcovr
 app load lcov
 lcov --zerocounters --directory  $ULOGRBUILD
-ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1
-: <<'END'
+ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I1,50
+: <<'SQUISHEND'
 set +x
 echo "*********************************************"
 echo "************     PART FOUR     **************"
@@ -390,7 +390,9 @@ echo "=============================================="
 
 echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
-END
+
+SQUISHEND
+
 set +x
 echo "*********************************************"
 echo "************     PART FIVE     **************"
