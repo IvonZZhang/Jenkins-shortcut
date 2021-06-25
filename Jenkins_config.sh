@@ -203,7 +203,7 @@ app load gcovr
 app load lcov
 lcov --zerocounters --directory  $ULOGRBUILD
 ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I 1,50
-: <<'SQUISHEND'
+#: <<'SQUISHEND'
 set +x
 echo "*********************************************"
 echo "************     PART FOUR     **************"
@@ -394,7 +394,7 @@ echo "=============================================="
 echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
 
-SQUISHEND
+#SQUISHEND
 
 set +x
 echo "*********************************************"
@@ -414,7 +414,7 @@ fi
 
 # The data is now in $ULOGRBUILD as it would be after a normal build/test run
 # Extracting the data for the cobertura publisher
-gcovr -r $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
+#gcovr -r $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
 
 # Use lcov to extract the coverage data to html data
 LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
@@ -434,8 +434,9 @@ lcov --remove ${LCOV_ARCHIVE}/lcov.info "BUILDS*"           -o ${LCOV_ARCHIVE}/l
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "datamodel/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*"  -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "evita/*"  -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ./lcov-archive/lcov.info '*/moc_*.cpp' -o ./lcov-archive/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "evita/*"           -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info '*/moc_*.cpp'       -o ./lcov-archive/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info '*autogen*'         -o ./lcov-archive/lcov.info
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
 
 # Generate the html files from the info
