@@ -202,7 +202,7 @@ ninja install
 app load gcovr
 app load lcov
 lcov --zerocounters --directory  $ULOGRBUILD
-ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I1,50
+ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I 1,50
 : <<'SQUISHEND'
 set +x
 echo "*********************************************"
