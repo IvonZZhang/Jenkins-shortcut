@@ -263,7 +263,7 @@ chmod go-r $HOME/.vnc/passwd # Own passwd file must be private.
 echo "Launching VNC Server..."
 
 (
-   vncserver -name jenkins_1 -xstartup $SQUISH_FOR_JENKINS/squish-xstartup -geometry 1400x1050
+   vncserver -name jenkins_1 -xstartup $SQUISH_FOR_JENKINS/squish-xstartup -geometry 1920x1080
 ) > $WORKSPACE/vncserver.out 2>&1 &
 pid_vncserver=$!
 sleep 8 # VNC server usually takes 4 seconds. Double it for safety.
