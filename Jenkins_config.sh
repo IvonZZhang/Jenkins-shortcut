@@ -12,6 +12,7 @@ echo "************  ARG PARSING  ******************"
 echo "*********************************************"
 
 JENKINS_BUILD_TYPE=
+CTEST_RANGE=
 NKNOWN_OPTIONS=()
 SUITES_TO_RUN=()
 while [[ $# -gt 0 ]]; do
@@ -92,6 +93,11 @@ while [[ $# -gt 0 ]]; do
     --testmanager)
       SUITES_TO_RUN+=("suite_BDD_TestManager")
       shift # past argument
+      ;;
+    -I|--test-information)
+      CTEST_RANGE="$2"
+      shift # past argument
+      shift # past value
       ;;
     --default)
       DEFAULT=YES
@@ -202,7 +208,7 @@ ninja install
 app load gcovr
 app load lcov
 lcov --zerocounters --directory  $ULOGRBUILD
-ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I 1,50
+ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I $CTEST_RANGE
 #: <<'SQUISHEND'
 set +x
 echo "*********************************************"
