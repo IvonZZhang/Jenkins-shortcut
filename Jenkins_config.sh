@@ -353,7 +353,7 @@ echo "********************************"
 echo "***** PREPARE FOR COVERAGE *****"
 echo "********************************"
 set -x
-app load gcovr
+# app load gcovr
 app load lcov
 lcov --zerocounters --directory  $ULOGRBUILD
 
@@ -420,7 +420,13 @@ fi
 
 # The data is now in $ULOGRBUILD as it would be after a normal build/test run
 # Extracting the data for the cobertura publisher
-#gcovr -r $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
+VIRTUALENV_ENV_PATH=$ULOGRBUILD/gcovr_env
+virtualenv --system-site-packages $VIRTUALENV_ENV_PATH
+source VIRTUALENV_ENV_PATH/bin/activate
+pip install gcovr # Obtain latest gcovr
+echo "gcovr executable is:"
+which gcovr
+gcovr -r $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
 
 # Use lcov to extract the coverage data to html data
 LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
