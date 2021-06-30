@@ -1,10 +1,10 @@
 # ****** Usage ******
 #
 # --build-type         <debug|release>  Affect build by setting CMAKE_BUILD_TYPE.
-# --<testsuite>                   Only specified Squish test suites will run.
+# --<testsuite>                         Only specified Squish test suites will run.
 # -I, --test-information <Start,End,Stride,test#,test#|Test file>
-#                                 Same option in ctest to run a specific number of tests by number.
-# --run-coverage                  Build with coverage enabled and generate coverage report. Omitted with --build-type release option present
+#                                       Same option in ctest to run a specific number of tests by number.
+# --run-coverage                        Build with coverage enabled and generate coverage report. Omitted with --build-type release option present
 #
 # ** E.g. To run all ctests and all Squish test suites on a debug build with coverage report generated**
 # $WORKSPACE/uLogR/src/tests/squish/jenkins/lin/Jenkins_config.sh --run-coverage \
@@ -379,13 +379,6 @@ echo "EVITA_TARGET_PORT=$EVITA_TARGET_PORT"
 echo "ULOGR_ARTIFICIAL_SRCREF_FILES=$ULOGR_ARTIFICIAL_SRCREF_FILES"
 echo "SQUISH_USER_SETTINGS_DIR=$SQUISH_USER_SETTINGS_DIR"
 echo "=========================================="
-set -x
-
-
-set +x
-echo "********************************"
-echo "***** PREPARE FOR COVERAGE *****"
-echo "********************************"
 set -x
 
 echo "============== App List =================="
