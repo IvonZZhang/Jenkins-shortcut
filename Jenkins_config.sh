@@ -434,7 +434,7 @@ echo ">>> Creating lcov archive directory"
 install -d -o jenkins -g jenkins -m 0755 "${LCOV_ARCHIVE}"
 
 # Possibly the info file can also be filtered to avoid unwanted directories/libraries to be counted
-lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
+lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info --no-external
 
 # Filter out the stuff we don't want
 # Important: Don't use '/u-blox/*' as a removal pattern, because it could remove entries that are in 
