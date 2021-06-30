@@ -442,7 +442,7 @@ lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info '/u-blox/gallery/*' -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info '*pools.cpp'        -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info '*rapidjson*'       -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "BUILDS*"           -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "BUILD/*"           -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "datamodel/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*"  -o ${LCOV_ARCHIVE}/lcov.info
