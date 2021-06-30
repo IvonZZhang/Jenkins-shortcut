@@ -1,9 +1,35 @@
 # ****** Usage ******
 #
-# --type         <debug|release>  Affect build by setting CMAKE_BUILD_TYPE.
-# --<testsuite>  			      Only specified Squish test suites will run.
+# --build-type         <debug|release>  Affect build by setting CMAKE_BUILD_TYPE.
+# --<testsuite>                   Only specified Squish test suites will run.
 # -I, --test-information <Start,End,Stride,test#,test#|Test file>
 #                                 Same option in ctest to run a specific number of tests by number.
+# --run-coverage                  Build with coverage enabled and generate coverage report. Omitted with --build-type release option present
+#
+# ** E.g. To run all ctests and all Squish test suites on a debug build with coverage report generated**
+# $WORKSPACE/uLogR/src/tests/squish/jenkins/lin/Jenkins_config.sh --run-coverage \
+#   --build-type debug \
+#   --api \
+#   --atconsole \
+#   --core \
+#   --dashboard \
+#   --evi \
+#   --flashfilesystemviewer \
+#   --genericmessageview \
+#   --graphviewer \
+#   --listview \
+#   --memoryviewer \
+#   --objectviewer \
+#   --psmessageviewer \
+#   --runtimefilter \
+#   --settingsmanager \
+#   --testmanager
+#
+# ** E.g. To run only the first 50 ctests and Squish test suite_BDD_Core on a release build without coverage report**
+# $WORKSPACE/uLogR/src/tests/squish/jenkins/lin/Jenkins_config.sh --run-coverage \
+#   --build-type release \
+#   -I 1,50
+#   --core
 
 #! /bin/sh
 # ulimit -f 10000000 # 10 GB
@@ -20,7 +46,8 @@ echo "*********************************************"
 
 JENKINS_BUILD_TYPE=
 CTEST_RANGE=
-NKNOWN_OPTIONS=()
+RUN_COVERAGE=
+UNKNOWN_OPTIONS=()
 SUITES_TO_RUN=()
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -106,8 +133,8 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       shift # past value
       ;;
-    --default)
-      DEFAULT=YES
+    --run-coverage)
+      RUN_COVERAGE=YES
       shift # past argument
       ;;
     *)    # unknown option
@@ -177,7 +204,7 @@ echo "*******     CMAKE     **********"
 echo "********************************"
 set -x
 
-if [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
+if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
     cmake-gcc -G Ninja \
        -DCMAKE_BUILD_TYPE=Debug \
        -DCBS_BUILD_OPTIONS_COVERAGE=ON \
@@ -187,7 +214,6 @@ if [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
 else
     cmake-gcc -G Ninja \
        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-       -DCBS_BUILD_OPTIONS_COVERAGE=ON \
        -DCTEST_GENERATE_XUNIT_FILES=ON \
        -DCBS_BUILD_WARNING_LEVEL=LOW \
        "$ULOGRROOT/src"
@@ -212,11 +238,13 @@ ninja install
 # $BUILD/delivery/bin/ulogr2text --help > ulogr2text_out.txt 2>&1
 
 # export  QT_QPA_PLATFORM=minimal
-app load gcovr
-app load lcov
-lcov --zerocounters --directory  $ULOGRBUILD
+
+if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
+    app load lcov
+    lcov --zerocounters --directory  $ULOGRBUILD
+fi
 ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I $CTEST_RANGE
-#: <<'SQUISHEND'
+
 set +x
 echo "*********************************************"
 echo "************     PART FOUR     **************"
@@ -295,7 +323,6 @@ echo "=============================================="
 echo "Set up Squish"
 echo "=============================================="
 
-app load squish/6.7.0_qt512_64bit
 app load 64bit $ULOGRROOT/setup_squish
 set -x
 
@@ -360,19 +387,12 @@ echo "********************************"
 echo "***** PREPARE FOR COVERAGE *****"
 echo "********************************"
 set -x
-# app load gcovr
-app load lcov
-lcov --zerocounters --directory  $ULOGRBUILD
 
 echo "============== App List =================="
 app list
 
 cd $WORKSPACE
 
-# squishrunner --testsuite $WORKSPACE/uLogR/src/plugins/memory_viewer/tests/suite_BDD_MemoryViewer --local \
-#--tags '~@target' --tags '~@T_ULOGR-1346' --tags '~@workinprogress' --tags '~@replay' --tags '~@deprecated' \
-#--reportgen xml2.2,$WORKSPACE/squish_report_xml/squish_report.xml --reportgen html,$WORKSPACE/squish_report_html/ \
-#--reportgen stdout | tee -a $ULOGRBUILD/squish.out 2>&1
 for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
 do
     set -x
@@ -407,7 +427,9 @@ echo "=============================================="
 echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
 
-#SQUISHEND
+if [[ ! $RUN_COVERAGE == "YES" ]] || [[ ! $JENKINS_BUILD_TYPE == "debug" ]]; then
+    exit 0
+fi
 
 set +x
 echo "*********************************************"
@@ -452,7 +474,7 @@ lcov --remove ${LCOV_ARCHIVE}/lcov.info '*rapidjson*'       -o ${LCOV_ARCHIVE}/l
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "BUILD/*"           -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "datamodel/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*"  -o ${LCOV_ARCHIVE}/lcov.info
+lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info "evita/*"           -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info '*/moc_*.cpp'       -o ${LCOV_ARCHIVE}/lcov.info
 lcov --remove ${LCOV_ARCHIVE}/lcov.info '*autogen*'         -o ${LCOV_ARCHIVE}/lcov.info
