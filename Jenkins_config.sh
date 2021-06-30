@@ -1,3 +1,10 @@
+# ****** Usage ******
+#
+# --type         <debug|release>  Affect build by setting CMAKE_BUILD_TYPE.
+# --<testsuite>  			      Only specified Squish test suites will run.
+# -I, --test-information <Start,End,Stride,test#,test#|Test file>
+#                                 Same option in ctest to run a specific number of tests by number.
+
 #! /bin/sh
 # ulimit -f 10000000 # 10 GB
 set +o posix
