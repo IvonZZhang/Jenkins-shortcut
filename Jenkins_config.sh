@@ -444,11 +444,11 @@ fi
 # Extracting the data for the cobertura publisher
 VIRTUALENV_ENV_PATH=$ULOGRBUILD/gcovr_env
 virtualenv --system-site-packages $VIRTUALENV_ENV_PATH
-source VIRTUALENV_ENV_PATH/bin/activate
-pip install gcovr # Obtain latest gcovr
+source $VIRTUALENV_ENV_PATH/bin/activate
+pip install --disable-pip-version-check gcovr # Obtain latest gcovr
 echo "gcovr executable is:"
 which gcovr
-gcovr -r $ULOGRBUILD -v --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
+gcovr -r $ULOGRBUILD --xml --output=${COVERAGE_REPORT_DIR}/coberturareport.xml
 
 # Use lcov to extract the coverage data to html data
 LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
