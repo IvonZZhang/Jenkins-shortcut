@@ -242,7 +242,16 @@ ninja install
 if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
     app load lcov
     lcov --zerocounters --directory  $ULOGRBUILD
+    echo "Coverage counters reset to zero"
 fi
+
+set +x
+echo "*********************************************"
+echo "************    PART THREE     **************"
+echo "************      CTEST        **************"
+echo "*********************************************"
+set -x
+
 ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I $CTEST_RANGE
 
 set +x
@@ -421,6 +430,7 @@ echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
 
 if [[ ! $RUN_COVERAGE == "YES" ]] || [[ ! $JENKINS_BUILD_TYPE == "debug" ]]; then
+    echo "Not a debug build or not asked to run coverage. Finished and exiting..."
     exit 0
 fi
 
