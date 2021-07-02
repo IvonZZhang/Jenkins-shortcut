@@ -462,6 +462,7 @@ fi
 
 # The data is now in $ULOGRBUILD as it would be after a normal build/test run
 # Extracting the data for the cobertura publisher
+app switch python python/2.7.2.5_64bit
 VIRTUALENV_ENV_PATH=$ULOGRBUILD/gcovr_env
 virtualenv --system-site-packages $VIRTUALENV_ENV_PATH
 source $VIRTUALENV_ENV_PATH/bin/activate
