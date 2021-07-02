@@ -5,6 +5,7 @@
 # -I, --test-information <Start,End,Stride,test#,test#|Test file>
 #                                       Same option in ctest to run a specific number of tests by number.
 # --run-coverage                        Build with coverage enabled and generate coverage report. Omitted with --build-type release option present
+# --mno                                 Build the MNO variant
 #
 # ** E.g. To run all ctests and all Squish test suites on a debug build with coverage report generated**
 # $WORKSPACE/uLogR/src/tests/squish/jenkins/lin/Jenkins_config.sh --run-coverage \
@@ -47,6 +48,7 @@ echo "*********************************************"
 JENKINS_BUILD_TYPE=
 CTEST_RANGE=
 RUN_COVERAGE=
+MNO_BUILD=
 UNKNOWN_OPTIONS=()
 SUITES_TO_RUN=()
 while [[ $# -gt 0 ]]; do
@@ -137,6 +139,10 @@ while [[ $# -gt 0 ]]; do
       RUN_COVERAGE=YES
       shift # past argument
       ;;
+    --mno)
+      MNO_BUILD=YES
+      shift # past argument
+      ;;
     *)    # unknown option
       UNKNOWN_OPTIONS+=("$1") # save it in an array for later
       shift # past argument
@@ -203,6 +209,10 @@ echo "********************************"
 echo "*******     CMAKE     **********"
 echo "********************************"
 set -x
+
+if [[ $MNO_BUILD == "YES" ]]; then
+    MNO_OPTION='-DULOGR_VARIANT=MNO'
+fi
 
 if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
     cmake-gcc -G Ninja \
@@ -471,17 +481,21 @@ lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info --no-ext
 # Filter out the stuff we don't want
 # Important: Don't use '/u-blox/*' as a removal pattern, because it could remove entries that are in 
 # the Jenkins workspace on some build nodes (e.g. '/u-blox/work/jenkins000/...').
-lcov --remove ${LCOV_ARCHIVE}/lcov.info '/u-blox/gallery/*' -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info '*pools.cpp'        -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info '*rapidjson*'       -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "BUILD/*"           -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "datamodel/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "uLogR/src/plugins/runtime_filter/tests/*" -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info "evita/*"           -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info '*/moc_*.cpp'       -o ${LCOV_ARCHIVE}/lcov.info
-lcov --remove ${LCOV_ARCHIVE}/lcov.info '*autogen*'         -o ${LCOV_ARCHIVE}/lcov.info
+#lcov --remove ${LCOV_ARCHIVE}/lcov.info -o ${LCOV_ARCHIVE}/lcov.info \
+#        '/u-blox/gallery/*' \
+#        '*pools.cpp' \
+#        '*rapidjson*' \
+#        "BUILD/*" \
+#        "uLogR/src/tests/*" \
+#        "datamodel/tests/*" \
+#        "uLogR/src/plugins/runtime_filter/tests/*" \
+#        "evita/*" \
+#        '*/moc_*.cpp' \
+#        '*autogen*'
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
+
+# Extract the stuff we want (only files under $ULOGRROOT/src)
+lcov -e ${LCOV_ARCHIVE}/lcov.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov.info
 
 # Generate the html files from the info
 genhtml ${LCOV_ARCHIVE}/lcov.info --prefix ${WORKSPACE} --ignore-errors source -o ${LCOV_ARCHIVE}/html
