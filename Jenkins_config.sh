@@ -499,5 +499,5 @@ lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
 lcov -e ${LCOV_ARCHIVE}/lcov.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov.info
 
 # Generate the html files from the info
-genhtml ${LCOV_ARCHIVE}/lcov.info --prefix ${WORKSPACE} --ignore-errors source -o ${LCOV_ARCHIVE}/html
+genhtml ${LCOV_ARCHIVE}/lcov.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
 
