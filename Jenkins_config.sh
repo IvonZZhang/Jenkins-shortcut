@@ -236,6 +236,19 @@ echo "********************************"
 set -x
 
 ninja -j6
+if [ $? -ge 1 ]
+then
+    echo "WARNING: Building ui_zipselection.h"
+    ninja ui_zipselection.h
+    ninja -j6
+fi
+[ $? -ge 1 ] && ninja -j1
+
+if [ $? -ge 1 ]
+then
+    echo "ERROR: Something is very wrong and the code doesn't even compile!"
+    exit 1
+fi
 
 set +x
 echo "********************************"
@@ -254,6 +267,8 @@ if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
     lcov --zerocounters --directory  $ULOGRBUILD
     echo "Coverage counters reset to zero"
 fi
+
+export QT_QPA_PLATFORM=offscreen
 
 set +x
 echo "*********************************************"
