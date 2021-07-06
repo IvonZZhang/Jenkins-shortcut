@@ -236,18 +236,19 @@ echo "********************************"
 set -x
 
 ninja -j6
-if [ $? -ge 1 ]
-then
+if [ $? -ge 1 ]; then
     echo "WARNING: Building ui_zipselection.h"
     ninja ui_zipselection.h
     ninja -j6
 fi
 [ $? -ge 1 ] && ninja -j1
 
-if [ $? -ge 1 ]
-then
-    echo "ERROR: Something is very wrong and the code doesn't even compile!"
-    exit 1
+if [ $? -ge 1 ]; then
+    ninja -j1
+    if [ $? -ge 1 ]; then
+        echo "ERROR: Something is very wrong and the code doesn't even compile!"
+        exit 1
+    fi
 fi
 
 set +x
