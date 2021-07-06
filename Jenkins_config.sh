@@ -269,8 +269,6 @@ if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
     echo "Coverage counters reset to zero"
 fi
 
-export QT_QPA_PLATFORM=offscreen
-
 set +x
 echo "*********************************************"
 echo "************    PART THREE     **************"
