@@ -363,7 +363,7 @@ set -x
 # Ref. https://kb.froglogic.com/squish/qt/howto/bringing-window-foreground/ and https://superuser.com/questions/143044/how-to-prevent-new-windows-from-stealing-focus-in-gnome
 gconftool-2 -s -t string /apps/metacity/general/focus_new_windows "None"
 
-# Where is this used?
+# SQUISH_TEMP is referred in Squish test scripts storing generated files during testing etc.
 mkdir -p $ULOGRBUILD/squish_temp
 export SQUISH_TEMP=$ULOGRBUILD/squish_temp
 
@@ -383,7 +383,6 @@ squishrunner --config setGlobalScriptDirs $SQUISH_SCRIPT_DIR
 squishserver --config addAUT ulogr $ULOGRBUILD/delivery/bin
 squishserver --config addAUT ulogr.exe $ULOGRBUILD/delivery/lib64
 squishserver --config addAttachableAUT ulogr localhost:9999
-# squishrunner --config addAttachableAUT ulogr localhost:9999
 
 set -x
 echo "==========================================="
@@ -395,7 +394,7 @@ set +x
 
 export SQUISHRUNNER_TAGS="--tags ~@target --tags ~@T_ULOGR-1346 --tags ~@workinprogress --tags ~@replay --tags ~@deprecated --tags ~@serial --tags ~@listenOnly"
 # export SQUISHXML2HTML_PY="/u-blox/gallery/froglogic/squish/lin_64/6.2_qt56/examples/regressiontesting/squishxml2html.py"
-set -x
+SUITES_TO_RUN_IN_MNO_BUILD=(suite_BDD_Api suite_BDD_Core suite_BDD_Dashboard suite_BDD_GenericMessageView suite_BDD_GraphViewer suite_BDD_ListView suite_BDD_ObjectViewer suite_BDD_PSMessageViewer)
 
 # evaluate_squish_report_py=$WORKSPACE/uLogR/src/tests/squish/scripts/evaluate_squish_report.py
 
@@ -422,14 +421,21 @@ cd $WORKSPACE
 for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
 do
     set -x
-    remove_ulogr_config
-    
+
     suite_name=$(echo $suite_dir | sed -E "s/^.*\/(\w+)/\1/")
+
     if [[ ! " ${SUITES_TO_RUN[@]} " =~ " ${suite_name} " ]]; then
         # Not asked to run this suite, skip
         continue
     fi
-    
+
+    if [[ $MNO_BUILD == "YES" ]] && [[ ! " ${SUITES_TO_RUN_IN_MNO_BUILD[@]} " =~ " ${suite_name} " ]]; then
+        # This is a MNO build and current plugin is not included. Skipping
+        continue
+    fi
+
+    remove_ulogr_config
+
     set +x
     echo
     echo "------------------ START: $suite_name --------------------------"
