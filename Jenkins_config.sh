@@ -497,7 +497,7 @@ echo ">>> Creating lcov archive directory"
 install -d -o jenkins -g jenkins -m 0755 "${LCOV_ARCHIVE}"
 
 # Possibly the info file can also be filtered to avoid unwanted directories/libraries to be counted
-lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov_origin.info
+lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
 
 # Filter out the stuff we don't want
 # Important: Don't use '/u-blox/*' as a removal pattern, because it could remove entries that are in 
@@ -516,11 +516,8 @@ lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov_origin.info
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
 
 # Extract the stuff we want (only files under $ULOGRROOT/src)
-lcov -e ${LCOV_ARCHIVE}/lcov_origin.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov_extract.info
-lcov -e ${LCOV_ARCHIVE}/lcov_origin.info "$ULOGRROOT/src/*" --ignore-errors gcov,source,graph -o ${LCOV_ARCHIVE}/lcov_extract_noerror.info
+lcov -e ${LCOV_ARCHIVE}/lcov.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov_extracted.info
 
 # Generate the html files from the info
-genhtml ${LCOV_ARCHIVE}/lcov_origin.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
-genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html_extract
-genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors gcov,source,graph -o ${LCOV_ARCHIVE}/html_noerror
+genhtml ${LCOV_ARCHIVE}/lcov_extracted.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
 
