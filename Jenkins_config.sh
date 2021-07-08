@@ -521,6 +521,6 @@ lcov -e ${LCOV_ARCHIVE}/lcov_origin.info "$ULOGRROOT/src/*" --ignore-errors gcov
 
 # Generate the html files from the info
 genhtml ${LCOV_ARCHIVE}/lcov_origin.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
-genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
-genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors gcov,source,graph -o ${LCOV_ARCHIVE}/html
+genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html_extract
+genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors gcov,source,graph -o ${LCOV_ARCHIVE}/html_noerror
 
