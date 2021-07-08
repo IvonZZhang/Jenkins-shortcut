@@ -516,9 +516,11 @@ lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov_origin.info
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
 
 # Extract the stuff we want (only files under $ULOGRROOT/src)
-lcov -e ${LCOV_ARCHIVE}/lcov.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov_extract.info
+lcov -e ${LCOV_ARCHIVE}/lcov_origin.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov_extract.info
+lcov -e ${LCOV_ARCHIVE}/lcov_origin.info "$ULOGRROOT/src/*" --ignore-errors gcov,source,graph -o ${LCOV_ARCHIVE}/lcov_extract_noerror.info
 
 # Generate the html files from the info
 genhtml ${LCOV_ARCHIVE}/lcov_origin.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
 genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
+genhtml ${LCOV_ARCHIVE}/lcov_extract.info --prefix ${ULOGRROOT} --ignore-errors gcov,source,graph -o ${LCOV_ARCHIVE}/html
 
