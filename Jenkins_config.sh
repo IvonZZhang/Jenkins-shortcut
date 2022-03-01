@@ -497,7 +497,7 @@ vncserver -kill $disp
 
 if [[ ! $RUN_COVERAGE == "YES" ]] || [[ ! $JENKINS_BUILD_TYPE == "debug" ]]; then
     echo "Not a debug build or not asked to run coverage. Finished and exiting..."
-    exit 0
+    exit $EXIT_CODE
 fi
 
 set +x
