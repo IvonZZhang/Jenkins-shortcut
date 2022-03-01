@@ -33,7 +33,7 @@
 #   --core
 
 #! /bin/sh
-# ulimit -f 10000000 # 10 GB
+ulimit -f 10000000 # 10 GB
 set +o posix
 # Jenkins execute shell scripts with `/bin/sh -xe`, which means it exits immediately after a failure
 # We want it to execute anyway, even if e.g. some ctests fails. So disable option -e manually
@@ -276,7 +276,9 @@ echo "************      CTEST        **************"
 echo "*********************************************"
 set -x
 
+export QT_QPA_PLATFORM=offscreen
 ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I $CTEST_RANGE
+export QT_QPA_PLATFORM=
 
 set +x
 echo "*********************************************"
@@ -310,7 +312,7 @@ rm -rvf $SQUISH_DUMP_FILE_PATH
 # uLogR settings directory should be empty to ensure tests run properly
 remove_ulogr_config() {
   (
-    rm -vf $HOME/.ubx/ulogr*.json 
+    rm -vf $HOME/.ubx/ulogr*.json
     rm -vf $HOME/.ubx/ulogr*.ini
   )
 }
@@ -330,7 +332,7 @@ set -x
 chmod u+rwx $HOME
 mkdir -p $HOME/.vnc
 chmod u+w $HOME/.vnc/passwd ||:
-export SQUISH_FOR_JENKINS=$WORKSPACE/uLogR/src/tests/squish/jenkins 
+export SQUISH_FOR_JENKINS=$WORKSPACE/uLogR/src/tests/squish/jenkins
 cp -v $SQUISH_FOR_JENKINS/.vnc/passwd $HOME/.vnc/passwd # Password: jenkins
 chmod go-r $HOME/.vnc/passwd # Own passwd file must be private.
 
@@ -372,6 +374,10 @@ export SQUISH_USER_SETTINGS_DIR=$WORKSPACE/.squish
 export ULOGR_ARTIFICIAL_SRCREF_FILES=$ULOGRROOT/src/tests/srcref_files
 export EVITA_TARGET_PORT=8890
 
+# Squish is called in CLI on Jenkins, and hence missing this environment variable
+# Manually add it here for its usage in test scripts to determine desktop environment
+export XDG_CURRENT_DESKTOP=GNOME
+
 # Register AUT to squishserver
 echo "Registering ulogr to Squish..."
 # autAuthority=localhost:4324
@@ -392,7 +398,7 @@ cat $SQUISH_USER_SETTINGS_DIR/ver1/server.ini
 echo "==========================================="
 set +x
 
-export SQUISHRUNNER_TAGS="--tags ~@target --tags ~@T_ULOGR-1346 --tags ~@workinprogress --tags ~@replay --tags ~@deprecated --tags ~@serial --tags ~@listenOnly"
+export SQUISHRUNNER_TAGS="--tags ~@target --tags ~@T_ULOGR-1346 --tags ~@workinprogress --tags ~@deprecated --tags ~@serial --tags ~@listenOnly"
 # export SQUISHXML2HTML_PY="/u-blox/gallery/froglogic/squish/lin_64/6.2_qt56/examples/regressiontesting/squishxml2html.py"
 SUITES_TO_RUN_IN_MNO_BUILD=(suite_BDD_Api suite_BDD_Core suite_BDD_Dashboard suite_BDD_GenericMessageView suite_BDD_GraphViewer suite_BDD_ListView suite_BDD_ObjectViewer suite_BDD_PSMessageViewer)
 
@@ -452,6 +458,34 @@ do
     set -x
 done
 
+#
+# Is it STABLE (Green), UNSTABLE (Yellow), or FAILED (Red)?
+#
+
+cd $WORKSPACE
+export evaluate_squish_report=$WORKSPACE/uLogR/src/tests/squish/scripts/evaluate_squish_report.py
+> build.status
+if [[ -f "$WORKSPACE/squishrunner_report_xml/*.xml" ]]; then
+  python $evaluate_squish_report --tag @workinprogress $WORKSPACE/squishrunner_report_xml/*.xml --result $WORKSPACE/squishrunner_report/data/results-v1.js
+fi
+
+BUILD_STATUS=""
+# Read the first line of build.status to get the evaluation result from the python script
+BUILD_STATUS=$(head -n 1 build.status)
+echo "Build status is $BUILD_STATUS"
+EXIT_CODE=0
+# 13 is a magic number as exit code used in Jenkins to mark job as UNSTABLE
+if [ "__X__$BUILD_STATUS" == "__X__UNSTABLE" ]; then
+    EXIT_CODE=13
+elif [ "__X__$BUILD_STATUS" == "__X__SUCCESS" ]; then
+    EXIT_CODE=0
+elif [ "__X__$BUILD_STATUS" == "__X__FAILED" ]; then
+    EXIT_CODE=1
+else
+    echo "The evaluation of Squish report failed! Maybe the test is not even finished?"
+    EXIT_CODE=1
+fi
+
 echo "=============================================="
 echo "Clean up Squish and VNC"
 echo "=============================================="
@@ -500,7 +534,7 @@ install -d -o jenkins -g jenkins -m 0755 "${LCOV_ARCHIVE}"
 lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
 
 # Filter out the stuff we don't want
-# Important: Don't use '/u-blox/*' as a removal pattern, because it could remove entries that are in 
+# Important: Don't use '/u-blox/*' as a removal pattern, because it could remove entries that are in
 # the Jenkins workspace on some build nodes (e.g. '/u-blox/work/jenkins000/...').
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info -o ${LCOV_ARCHIVE}/lcov.info \
 #        '/u-blox/gallery/*' \
@@ -515,9 +549,16 @@ lcov -d  $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
 #        '*autogen*'
 #lcov --remove ${LCOV_ARCHIVE}/lcov.info "/work/jenkins/*"  -o ${LCOV_ARCHIVE}/lcov.info
 
-# Extract the stuff we want (only files under $ULOGRROOT/src)
-lcov -e ${LCOV_ARCHIVE}/lcov.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov_extracted.info
+# Extract only files under $ULOGRROOT/src
+lcov -e ${LCOV_ARCHIVE}/lcov.info "$ULOGRROOT/src/*" -o ${LCOV_ARCHIVE}/lcov.info
+
+# Filter out the stuff we don't want: source files for decoders, files for messageconsole (deprecated)
+lcov --remove ${LCOV_ARCHIVE}/lcov.info -o ${LCOV_ARCHIVE}/lcov.info \
+        '*src/tests/decoder/*' \
+        '*src/tests/ma_system/*' \
+        '*src/plugins/message_console/*'
 
 # Generate the html files from the info
-genhtml ${LCOV_ARCHIVE}/lcov_extracted.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
+genhtml ${LCOV_ARCHIVE}/lcov.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
 
+exit $EXIT_CODE
