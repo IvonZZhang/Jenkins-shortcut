@@ -466,7 +466,7 @@ cd $WORKSPACE
 export evaluate_squish_report=$WORKSPACE/uLogR/src/tests/squish/scripts/evaluate_squish_report.py
 > build.status
 if [[ -f "$SQUISH_REPORT_DIR/squish_report_xml/*.xml" ]]; then
-  python $evaluate_squish_report --tag @workinprogress $SQUISH_REPORT_DIR/squish_report_xml/*.xml --result $SQUISH_REPORT_DIR/squish_report_html/data/results-v1.js
+    python $evaluate_squish_report --tag @workinprogress $SQUISH_REPORT_DIR/squish_report_xml/*.xml --result $SQUISH_REPORT_DIR/squish_report_html/data/results-v1.js
 fi
 
 BUILD_STATUS=""
@@ -475,11 +475,11 @@ BUILD_STATUS=$(head -n 1 build.status)
 echo "Build status is $BUILD_STATUS"
 EXIT_CODE=0
 # 13 is a magic number as exit code used in Jenkins to mark job as UNSTABLE
-if [ "__X__$BUILD_STATUS" == "__X__UNSTABLE" ]; then
+if [[ "__X__$BUILD_STATUS" == "__X__UNSTABLE" ]]; then
     EXIT_CODE=13
-elif [ "__X__$BUILD_STATUS" == "__X__SUCCESS" ]; then
+elif [[ "__X__$BUILD_STATUS" == "__X__SUCCESS" ]]; then
     EXIT_CODE=0
-elif [ "__X__$BUILD_STATUS" == "__X__FAILED" ]; then
+elif [[ "__X__$BUILD_STATUS" == "__X__FAILED" ]]; then
     EXIT_CODE=1
 else
     echo "The evaluation of Squish report failed! Maybe the test is not even finished?"
