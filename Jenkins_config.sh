@@ -465,7 +465,7 @@ done
 cd $WORKSPACE
 export evaluate_squish_report=$WORKSPACE/uLogR/src/tests/squish/scripts/evaluate_squish_report.py
 > build.status
-if [[ -f "$SQUISH_REPORT_DIR/squishrunner_report_xml/*.xml" ]]; then
+if [[ -f "$SQUISH_REPORT_DIR/squish_report_xml/*.xml" ]]; then
   python $evaluate_squish_report --tag @workinprogress $SQUISH_REPORT_DIR/squish_report_xml/*.xml --result $SQUISH_REPORT_DIR/squish_report_html/data/results-v1.js
 fi
 
