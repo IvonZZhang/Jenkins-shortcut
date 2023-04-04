@@ -1,4 +1,37 @@
-#!/bin/sh
+# ****** Usage ******
+#
+# --build-type         <debug|release>  Affect build by setting CMAKE_BUILD_TYPE.
+# --<testsuite>                         Only specified Squish test suites will run.
+# -I, --test-information <Start,End,Stride,test#,test#|Test file>
+#                                       Same option in ctest to run a specific number of tests by number.
+# --run-coverage                        Build with coverage enabled and generate coverage report. Omitted with --build-type release option present
+# --mno                                 Build the MNO variant
+#
+# ** E.g. To run all ctests and all Squish test suites on a debug build with coverage report generated**
+# $WORKSPACE/uLogR/src/tests/squish/jenkins/lin/Jenkins_config.sh --run-coverage \
+#   --build-type debug \
+#   --api \
+#   --atconsole \
+#   --core \
+#   --dashboard \
+#   --evi \
+#   --flashfilesystemviewer \
+#   --genericmessageview \
+#   --graphviewer \
+#   --listview \
+#   --memoryviewer \
+#   --objectviewer \
+#   --psmessageviewer \
+#   --runtimefilter \
+#   --settingsmanager \
+#   --testmanager
+#
+# ** E.g. To run only the first 50 ctests and Squish test suite_BDD_Core on a release build without coverage report**
+# $WORKSPACE/uLogR/src/tests/squish/jenkins/lin/Jenkins_config.sh --run-coverage \
+#   --build-type release \
+#   --core
+
+#! /bin/sh
 ulimit -f 10000000 # 10 GB
 set +o posix
 # Jenkins execute shell scripts with `/bin/sh -xe`, which means it exits immediately after a failure
@@ -93,8 +126,7 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       ;;
     --testmanager)
-      # SUITES_TO_RUN+=("suite_BDD_TestManager")
-      echo "Suite_BDD_TestManager is temporarily WIP for streamtester"
+      SUITES_TO_RUN+=("suite_BDD_TestManager")
       shift # past argument
       ;;
     -I|--test-information)
@@ -117,6 +149,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+set -- "${UNKNOWN_OPTIONS[@]}" # restore unknown options
+echo "Unknown options: ${UNKNOWN_OPTIONS[*]}"
+
+if [[ ! $JENKINS_BUILD_TYPE == "release" ]] && [[ ! $JENKINS_BUILD_TYPE == "debug" ]]; then
+    echo "Please specify build type using '-t or --build-type <release|debug>'"
+    exit 1
+fi
+
+echo "================================================================================================="
+echo "Running configurations for Squish test for uLogR 64bit $JENKINS_BUILD_TYPE build."
+echo "Suites to run: ${SUITES_TO_RUN[*]}"
+echo "================================================================================================"
+
 echo "*********************************************"
 echo "************   PART ONE    ******************"
 echo "************  ENVIRONMENT  ******************"
@@ -128,21 +173,120 @@ ${MODULE_INIT_CMD}
 set +x
 module load $PWD/cbs/setup_HOST
 module load dot
-module load lcov
 app list
 set -x
 
 export BUILD="$WORKSPACE/BUILD"
 export ULOGRBUILD=$BUILD
-
-# /usr/sbin needed to allow firefox script to work
 export PATH=${PATH}:/usr/sbin
-
 # Print directories in PATH line by line
 sed 's/:/\n/g' <<< "$PATH"
 mkdir -p $BUILD
 
 printenv  > envVars.prop
+
+set +x
+echo "*********************************************"
+echo "***********    PART TWO    ******************"
+echo "*********** BUILD & DEPLOY ******************"
+echo "*********************************************"
+set -x
+
+echo Skipping removal of BUILDS, only remove tests.
+[ -e $BUILD/Testing ] && rm -rf $BUILD/Testing || echo "No $BUILD/Testing directory to delete."
+
+## [ -e $BUILD ] && rm -rf $BUILD || echo "No $BUILD directory to delete."
+
+cd "$BUILD"
+
+set +x
+echo "=============================================="
+echo "Current working directory is $PWD"
+echo "=============================================="
+
+echo "********************************"
+echo "*******     CMAKE     **********"
+echo "********************************"
+set -x
+
+if [[ $MNO_BUILD == "YES" ]]; then
+    MNO_OPTION='-DULOGR_VARIANT=MNO'
+fi
+
+if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
+    cmake-gcc -G Ninja \
+       -DCMAKE_UNITY_BUILD=ON \
+       -DCMAKE_BUILD_TYPE=Debug \
+       -DCBS_BUILD_OPTIONS_COVERAGE=ON \
+       -DCTEST_GENERATE_XUNIT_FILES=ON \
+       -DCBS_BUILD_WARNING_LEVEL=LOW \
+       "$ULOGRROOT/src"
+else
+    cmake-gcc -G Ninja \
+       -DCMAKE_UNITY_BUILD=ON \
+       -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+       -DCTEST_GENERATE_XUNIT_FILES=ON \
+       -DCBS_BUILD_WARNING_LEVEL=LOW \
+       "$ULOGRROOT/src"
+fi
+
+set +x
+echo "********************************"
+echo "*******     NINJA     **********"
+echo "********************************"
+set -x
+
+ninja -j6
+if [ $? -ge 1 ]; then
+    echo "WARNING: Building ui_zipselection.h"
+    ninja ui_zipselection.h
+    ninja -j6
+fi
+[ $? -ge 1 ] && ninja -j1
+
+if [ $? -ge 1 ]; then
+    ninja -j1
+    if [ $? -ge 1 ]; then
+        echo "ERROR: Something is very wrong and the code doesn't even compile!"
+        exit 1
+    fi
+fi
+
+set +x
+echo "********************************"
+echo "*******     DEPLOY    **********"
+echo "********************************"
+set -x
+
+ninja install
+
+# $BUILD/delivery/bin/ulogr2text --help > ulogr2text_out.txt 2>&1
+
+# export  QT_QPA_PLATFORM=minimal
+
+if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
+    app load lcov
+    lcov --zerocounters --directory  $ULOGRBUILD
+    echo "Coverage counters reset to zero"
+fi
+
+set +x
+echo "*********************************************"
+echo "************    PART THREE     **************"
+echo "************      CTEST        **************"
+echo "*********************************************"
+set -x
+
+#export QT_QPA_PLATFORM=offscreen
+#ctest --timeout=300 --force-new-ctest-process -O ctest.out -T Test --output-on-failure -j1 -I $CTEST_RANGE
+#EXIT_CODE_CTEST=$?
+#export QT_QPA_PLATFORM=
+
+set +x
+echo "*********************************************"
+echo "************     PART FOUR     **************"
+echo "************      SQUISH       **************"
+echo "*********************************************"
 
 echo "=============================================="
 echo "Clean up old report, settings file, crash dumps, temporary files..."
@@ -254,6 +398,12 @@ grep -q toolkit.startup.max_resumed_crashes ${FIREFOX_USER_PREFERENCE_FILE} || e
 # Set an environment variable to stop Firefox from re-starting in safe mode
 export MOZ_DISABLE_AUTO_SAFE_MODE=ON
 
+# Don't bring up the about:session restore
+# user_pref("browser.sessionstore.resume_from_crash", false);
+sed -i 's/user_pref("browser.sessionstore.resume_from_crash",.*);/user_pref("browser.sessionstore.resume_from_crash",false);/' $FIREFOX_USER_PREFERENCE_FILE
+grep -q browser.sessionstore.resume_from_crash ${FIREFOX_USER_PREFERENCE_FILE} || echo 'user_pref("browser.sessionstore.resume_from_crash",false);' >> $FIREFOX_USER_PREFERENCE_FILE
+
+
 # Register AUT to squishserver
 echo "Registering ulogr to Squish..."
 # autAuthority=localhost:4324
@@ -265,6 +415,32 @@ squishrunner --config setGlobalScriptDirs $SQUISH_SCRIPT_DIR
 squishserver --config addAUT ulogr $ULOGRBUILD/delivery/bin
 squishserver --config addAUT ulogr.exe $ULOGRBUILD/delivery/lib64
 squishserver --config addAttachableAUT ulogr localhost:9999
+
+# Use a longer timeout for waitForObject() in coverage build because it's generally slower
+if [[ $RUN_COVERAGE == "YES" ]] && [[ $JENKINS_BUILD_TYPE == "debug" ]]; then
+    cat > config.xml <<- EOM
+<testconfig version="1.0">
+  <information> <summary/> <description/> </information>
+  <testsettings>
+    <waitForObjectTimeout>30000</waitForObjectTimeout>
+  </testsettings>
+</testconfig>
+EOM
+else
+    cat > config.xml <<- EOM
+<testconfig version="1.0">
+  <information> <summary/> <description/> </information>
+  <testsettings>
+    <waitForObjectTimeout>20000</waitForObjectTimeout>
+  </testsettings>
+</testconfig>
+EOM
+fi
+## The config.xml is only effective if it's located under the testSuite directory (next to suite.conf)
+for suite_dir in $(ls -d $ULOGRROOT/src/core/tests/suite_* $ULOGRROOT/src/plugins/*/tests/suite_* $ULOGRROOT/src/api/tests/suite_*)
+do
+    cp config.xml $suite_dir/config.xml
+done
 
 set -x
 echo "==========================================="
@@ -294,8 +470,6 @@ echo "ULOGR_ARTIFICIAL_SRCREF_FILES=$ULOGR_ARTIFICIAL_SRCREF_FILES"
 echo "SQUISH_USER_SETTINGS_DIR=$SQUISH_USER_SETTINGS_DIR"
 echo "=========================================="
 set -x
-
-export LD_LIBRARY_PATH=${WORKSPACE}/BUILD/Output/lib64:${LD_LIBRARY_PATH}
 
 echo "============== App List =================="
 app list
@@ -328,7 +502,6 @@ do
     squishrunner --testsuite $suite_dir --local --retry 0 $timeout $SQUISHRUNNER_TAGS \
                  --reportgen xml2.2,$SQUISH_REPORT_DIR/squish_report_xml/squish_report_${suite_name}.xml \
                  --reportgen html,$SQUISH_REPORT_DIR/squish_report_html/ \
-                 --reportgen junit,$SQUISH_REPORT_DIR/squish_report_junit.xml \
                  --reportgen stdout > >(tee -a $SQUISH_REPORT_DIR/squish.out) 2> >(tee -a $SQUISH_REPORT_DIR/squish.out >&2)
     set +x
     echo
@@ -354,17 +527,17 @@ BUILD_STATUS=""
 # Read the first line of build.status to get the evaluation result from the python script
 BUILD_STATUS=$(head -n 1 build.status)
 echo "Build status is $BUILD_STATUS"
-EXIT_CODE=0
+EXIT_CODE_SQUISH=0
 # 13 is a magic number as exit code used in Jenkins to mark job as UNSTABLE
 if [[ "__X__$BUILD_STATUS" == "__X__UNSTABLE" ]]; then
-    EXIT_CODE=13
+    EXIT_CODE_SQUISH=13
 elif [[ "__X__$BUILD_STATUS" == "__X__SUCCESS" ]]; then
-    EXIT_CODE=0
+    EXIT_CODE_SQUISH=0
 elif [[ "__X__$BUILD_STATUS" == "__X__FAILED" ]]; then
-    EXIT_CODE=1
+    EXIT_CODE_SQUISH=1
 else
     echo "The evaluation of Squish report failed! Maybe the test is not even finished?"
-    EXIT_CODE=1
+    EXIT_CODE_SQUISH=1
 fi
 
 echo "=============================================="
@@ -374,68 +547,90 @@ echo "=============================================="
 echo -n "Shutting down Xvnc at $disp..."
 vncserver -kill $disp
 
-if [[ "${ULOGR_COVERAGE}" == "ON" ]]; then
-  set +x
-  echo "*********************************************"
-  echo "************     COVERAGE      **************"
-  echo "*********************************************"
-  set -x
+# Resolve the final return code based on ctest and Squish test result
+## ctest failed -> fail by return 1 regardless of Squish result
+## Squish unstable -> unstable by return 13
+## Squish failed -> fail by return 1
+if [[ $EXIT_CODE_CTEST -gt 0 ]]; then
+    EXIT_CODE=1
+else
+    EXIT_CODE=$EXIT_CODE_SQUISH
+fi
 
-  COVERAGE_REPORT_DIR=$WORKSPACE/Report_Coverage
-  if [ ! -d "$COVERAGE_REPORT_DIR" ]; then
-      echo ">>> Creating coverage report directory"
-      install -d -o jenkins -g jenkins -m 0755 "${COVERAGE_REPORT_DIR}"
-  else
-      echo ">>> Removing any previous lcov reports from ${COVERAGE_REPORT_DIR}"
-      rm -rf ${COVERAGE_REPORT_DIR}/*
-  fi
+if [[ ! $RUN_COVERAGE == "YES" ]] || [[ ! $JENKINS_BUILD_TYPE == "debug" ]]; then
+    echo "Not a debug build or not asked to run coverage. Finished and exiting..."
+    exit $EXIT_CODE
+fi
 
-  # The data is now in $ULOGRBUILD as it would be after a normal build/test run
-  # Use lcov to extract the coverage data to html data
+set +x
+echo "*********************************************"
+echo "************     PART FIVE     **************"
+echo "************     COVERAGE      **************"
+echo "*********************************************"
+set -x
 
-  LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
-  echo ">>> Creating lcov archive directory"
-  install -d -o jenkins -g jenkins -m 0755 "${LCOV_ARCHIVE}"
+COVERAGE_REPORT_DIR=$WORKSPACE/Report_Coverage
+if [ ! -d "$COVERAGE_REPORT_DIR" ]; then
+    echo ">>> Creating coverage report directory"
+    install -d -o jenkins -g jenkins -m 0755 "${COVERAGE_REPORT_DIR}"
+else
+    echo ">>> Removing any previous lcov reports from ${COVERAGE_REPORT_DIR}"
+    rm -rf ${COVERAGE_REPORT_DIR}/*
+fi
 
-  # Possibly the info file can also be filtered to avoid unwanted directories/libraries to be counted
-  lcov -d $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
+# The data is now in $ULOGRBUILD as it would be after a normal build/test run
+# Use lcov to extract the coverage data to html data
 
-  # Extract only files under $ULOGRROOT/src
-  echo ULOGRROOT is $ULOGRROOT
-  echo bash version is $BASH_VERSION
-  ## The workspace of Jenkins on Linux can be /var/lib/jenkins/ws/<workspace name>/... or /u-blox/work/jenkins000/ws/<workspace name>/...
-  ## The former is a symlink to the latter, but either might be the value of ULOGRROOT or be the path ending up in the coverage files
-  ## Files marked under either path should be extracted from the coverage info file
-  OLD_IFS=$IFS
-  IFS='/'
-  read -a ulogrroot_array <<< "$ULOGRROOT"
-  IFS="$OLD_IFS"
-  # WORKSPACE_NAME="${ulogrroot_array[-2]}"
-  WORKSPACE_NAME="${ulogrroot_array[${#ulogrroot_array[@]}-2]}"
-  echo "workspace name is $WORKSPACE_NAME"
-  ULOGRROOT_ALTERNATIVE=""
-  if [[ $ULOGRROOT == /u-blox* ]]; then
-    ULOGRROOT_ALTERNATIVE="/var/lib/jenkins/ws/${WORKSPACE_NAME}/uLogR"
-  else
-    ULOGRROOT_ALTERNATIVE="/u-blox/work/jenkins000/ws/${WORKSPACE_NAME}/uLogR"
-  fi
+LCOV_ARCHIVE="${COVERAGE_REPORT_DIR}/lcov-archive"
+echo ">>> Creating lcov archive directory"
+install -d -o jenkins -g jenkins -m 0755 "${LCOV_ARCHIVE}"
 
-  lcov -e ${LCOV_ARCHIVE}/lcov.info \
-          "$ULOGRROOT/src/*" \
-          "$ULOGRROOT_ALTERNATIVE/src/*" \
-          -o ${LCOV_ARCHIVE}/lcov_extracted.info
+# Possibly the info file can also be filtered to avoid unwanted directories/libraries to be counted
+lcov -d $ULOGRBUILD --capture --output-file  ${LCOV_ARCHIVE}/lcov.info
 
-  # Filter out the stuff we don't want: source files for decoders, files for messageconsole (deprecated)
-  lcov --remove ${LCOV_ARCHIVE}/lcov_extracted.info -o ${LCOV_ARCHIVE}/lcov_filtered.info \
-          '*src/tests/decoder/*' \
-          '*src/tests/ma_system/*' \
-          '*src/plugins/message_console/*'
+# Extract only files under $ULOGRROOT/src
+echo ULOGRROOT is $ULOGRROOT
+echo bash version is $BASH_VERSION
+## The workspace of Jenkins on Linux can be /var/lib/jenkins/workspace/<workspace name>/... or /u-blox/work/jenkins000/workspace/<workspace name>/...
+## The former is a symlink to the latter, but either might be the value of ULOGRROOT or be the path ending up in the coverage files
+## Files marked under either path should be extracted from the coverage info file
+OLD_IFS=$IFS
+IFS='/'
+read -a ulogrroot_array <<< "$ULOGRROOT"
+IFS="$OLD_IFS"
+# WORKSPACE_NAME="${ulogrroot_array[-2]}"
+WORKSPACE_NAME="${ulogrroot_array[${#ulogrroot_array[@]}-2]}"
+echo "workspace name is $WORKSPACE_NAME"
+ULOGRROOT_ALTERNATIVE=""
+if [[ $ULOGRROOT == /u-blox* ]]; then
+  ULOGRROOT_ALTERNATIVE="/var/lib/jenkins/workspace/LeuvenPermanent/LTF/${WORKSPACE_NAME}/uLogR"
+else
+  ULOGRROOT_ALTERNATIVE="/u-blox/work/jenkins000/workspace/LeuvenPermanent/LTF/${WORKSPACE_NAME}/uLogR"
+fi
 
-  # Generate the html files from the info
-  genhtml ${LCOV_ARCHIVE}/lcov_filtered.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
+lcov -e ${LCOV_ARCHIVE}/lcov.info \
+        "$ULOGRROOT/src/*" \
+        "$ULOGRROOT_ALTERNATIVE/src/*" \
+        -o ${LCOV_ARCHIVE}/lcov_extracted.info
 
-  echo ">>> Removing temporary files generated by coverage"
-  rm -f /tmp/*.ltrans.gcno
+# Filter out the stuff we don't want: source files for decoders, files for messageconsole (deprecated)
+lcov --remove ${LCOV_ARCHIVE}/lcov_extracted.info -o ${LCOV_ARCHIVE}/lcov_filtered.info \
+        '*src/tests/decoder/*' \
+        '*src/tests/ma_system/*' \
+        '*src/plugins/message_console/*'
+
+# Generate the html files from the info
+genhtml ${LCOV_ARCHIVE}/lcov_filtered.info --prefix ${ULOGRROOT} --ignore-errors source -o ${LCOV_ARCHIVE}/html
+
+echo ">>> Removing temporary files generated by coverage"
+rm -f /tmp/*.ltrans.gcno
+
+if [[ $EXIT_CODE_CTEST -gt 0 ]]; then
+    echo "One or more ctest cases failed! The test ran through Squish and Coverage anyway."
+fi
+
+if [[ $EXIT_CODE_SQUISH -gt 0 ]]; then
+    echo "One or more Squish test cases failed! The test ran through Coverage anyway."
 fi
 
 exit $EXIT_CODE
